@@ -1,14 +1,13 @@
 {
-  "$schema": "https://schema.railpack.com",
+  "$schema": "https://railpack.com",
   "provider": "node",
   "packages": {
-    "node": "22",
-    "rust": "latest"
+    "node": "22"
   },
   "steps": {
     "build": {
       "commands": [
-        "echo 'Rust configurado. Pulando build explicito.'"
+        "echo 'Binario fornecido diretamente. Pulando build.'"
       ]
     }
   },
