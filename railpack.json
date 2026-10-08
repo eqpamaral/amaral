@@ -1,5 +1,5 @@
 {
-  "$schema": "https://railpack.com",
+  "$schema": "https://schema.railpack.com",
   "provider": "node",
   "packages": {
     "node": "22",
@@ -8,7 +8,7 @@
   "steps": {
     "build": {
       "commands": [
-        "pnpm build"
+        "pnpm --filter=@scramjet/core build"
       ]
     }
   },
