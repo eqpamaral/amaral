@@ -25,14 +25,12 @@ const branch = "main";
 const packagejson = JSON.parse(await fs.readFile("./package.json", "utf-8"));
 const version = packagejson.version;
 
-const DEMO_PORT = process.env.DEMO_PORT || 4141;
-const WISP_PORT = process.env.WISP_PORT || 4142;
-
-if (process.env.VITE_WISP_URL) {
-	process.env.VITE_WISP_URL = normalizeWebsocketUrl(process.env.VITE_WISP_URL);
-} else {
-	process.env.VITE_WISP_URL = `ws://localhost:${WISP_PORT}/`;
-}
+// Vincula o tráfego do WISP diretamente ao servidor principal do Vite
+server.then((viteServer) => {
+	viteServer.httpServer?.on("upgrade", (req, socket, head) => {
+		wisp.routeRequest(req, socket, head);
+	});
+});
 
 const wispserver = http.createServer((req, res) => {
 	res.writeHead(200, { "Content-Type": "text/plain" });
