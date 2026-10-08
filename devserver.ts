@@ -2,7 +2,6 @@ import { createReadStream } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { stdout } from "node:process";
-import http from "node:http";
 import chalk from "chalk";
 import { createServer } from "vite";
 //@ts-expect-error no typedefs
@@ -25,31 +24,34 @@ const branch = "main";
 const packagejson = JSON.parse(await fs.readFile("./package.json", "utf-8"));
 const version = packagejson.version;
 
-// Configuração de portas unificada para o Railway
+// Configuração de porta nativa obrigatória para o Railway
 const PORTA_RAILWAY = Number(process.env.PORT) || 4141;
 
 if (process.env.VITE_WISP_URL) {
 	process.env.VITE_WISP_URL = normalizeWebsocketUrl(process.env.VITE_WISP_URL);
 } else {
-	process.env.VITE_WISP_URL = `ws://localhost:${PORTA_RAILWAY}/`;
+	process.env.VITE_WISP_URL = `ws://localhost:${PORTA_RAILWAY}/wisp/`;
 }
 
 wisp.options.allow_private_ips = true;
 wisp.options.allow_loopback_ips = true;
 
-// Inicializando o servidor principal do Vite na porta padrão do Railway
+// Inicializando o servidor principal do Vite apontando corretamente para o painel visual
 const server = await createServer({
 	configFile: "./packages/demo/vite.config.ts",
 	root: "./packages/demo",
 	server: {
 		port: PORTA_RAILWAY,
+		host: "0.0.0.0",
 		strictPort: true,
 	},
 });
 
-// Vincula o tráfego do protocolo WISP diretamente no mesmo servidor e porta
+// Interceta as conexões de WebSocket (WISP) apenas quando solicitado, sem derrubar o HTML
 server.httpServer?.on("upgrade", (req, socket, head) => {
-	wisp.routeRequest(req, socket, head);
+	if (req.url?.startsWith("/wisp") || req.url?.startsWith("/wisp/")) {
+		wisp.routeRequest(req, socket, head);
+	}
 });
 
 warnOnUrlEscape(server);
