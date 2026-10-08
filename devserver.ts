@@ -2,7 +2,6 @@ import { createReadStream } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { stdout } from "node:process";
-import { execSync } from "node:child_process";
 import http from "node:http";
 import chalk from "chalk";
 import { createServer } from "vite";
@@ -19,39 +18,38 @@ import rspackConfig from "./rspack.config.ts";
 
 const image = await fs.readFile("./assets/scramjet-mini-noalpha.png");
 
+// Resolvendo o erro do Git com texto fixo
 const commit = "v2-railway";
 const branch = "main";
 
 const packagejson = JSON.parse(await fs.readFile("./package.json", "utf-8"));
 const version = packagejson.version;
 
-// Vincula o tráfego do WISP diretamente ao servidor principal do Vite
-server.then((viteServer) => {
-	viteServer.httpServer?.on("upgrade", (req, socket, head) => {
-		wisp.routeRequest(req, socket, head);
-	});
-});
+// Configuração de portas unificada para o Railway
+const PORTA_RAILWAY = Number(process.env.PORT) || 4141;
 
-const wispserver = http.createServer((req, res) => {
-	res.writeHead(200, { "Content-Type": "text/plain" });
-	res.end("wisp server js rewrite");
-});
+if (process.env.VITE_WISP_URL) {
+	process.env.VITE_WISP_URL = normalizeWebsocketUrl(process.env.VITE_WISP_URL);
+} else {
+	process.env.VITE_WISP_URL = `ws://localhost:${PORTA_RAILWAY}/`;
+}
+
 wisp.options.allow_private_ips = true;
 wisp.options.allow_loopback_ips = true;
 
-wispserver.on("upgrade", (req, socket, head) => {
-	wisp.routeRequest(req, socket, head);
-});
-
-wispserver.listen(Number(WISP_PORT));
-
+// Inicializando o servidor principal do Vite na porta padrão do Railway
 const server = await createServer({
 	configFile: "./packages/demo/vite.config.ts",
 	root: "./packages/demo",
 	server: {
-		port: Number(DEMO_PORT),
+		port: PORTA_RAILWAY,
 		strictPort: true,
 	},
+});
+
+// Vincula o tráfego do protocolo WISP diretamente no mesmo servidor e porta
+server.httpServer?.on("upgrade", (req, socket, head) => {
+	wisp.routeRequest(req, socket, head);
 });
 
 warnOnUrlEscape(server);
@@ -61,19 +59,13 @@ await server.listen();
 const accent = (text: string) => chalk.hex("#f1855bff").bold(text);
 const highlight = (text: string) => chalk.hex("#fdd76cff").bold(text);
 const urlColor = (text: string) => chalk.hex("#64DFDF").underline(text);
-const note = (text: string) => chalk.hex("#CDB4DB")(text);
 const connector = chalk.hex("#8D99AE").dim("@");
 
 const lines = [
 	black()(`${highlight("SCRAMJET DEV SERVER")}`),
 	black()(
-		`${accent("demo")} ${connector} ${urlColor(
-			`http://localhost:${DEMO_PORT}/`
-		)}`
-	),
-	black()(
-		`${accent("wisp")} ${connector} ${urlColor(
-			process.env.VITE_WISP_URL ?? ""
+		`${accent("demo/wisp")} ${connector} ${urlColor(
+			`http://localhost:\${PORTA_RAILWAY}/`
 		)}`
 	),
 	black()(chalk.dim(`[${branch}] ${commit} scramjet/${version}`)),
