@@ -1,0 +1,18 @@
+{
+  "$schema": "https://railpack.com",
+  "provider": "node",
+  "packages": {
+    "node": "22",
+    "rust": "latest"
+  },
+  "steps": {
+    "build": {
+      "commands": [
+        "pnpm build"
+      ]
+    }
+  },
+  "deploy": {
+    "startCommand": "pnpm dev"
+  }
+}
