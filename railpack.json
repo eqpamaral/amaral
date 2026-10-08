@@ -4,10 +4,13 @@
   "packages": {
     "node": "22"
   },
+  "buildAptPackages": [
+    "git"
+  ],
   "steps": {
     "build": {
       "commands": [
-        "echo 'Binario fornecido diretamente. Pulando build.'"
+        "echo 'Git configurado com sucesso.'"
       ]
     }
   },
