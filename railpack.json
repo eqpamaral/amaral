@@ -1,5 +1,5 @@
 {
-  "$schema": "https://railpack.com",
+  "$schema": "https://schema.railpack.com",
   "provider": "node",
   "packages": {
     "node": "22",
@@ -8,8 +8,7 @@
   "steps": {
     "build": {
       "commands": [
-        "pnpm rewriter:build",
-        "pnpm build"
+        "echo 'Rust configurado. Pulando build explicito.'"
       ]
     }
   },
